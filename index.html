@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="id" class="bg-gray-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DTW Scheduler WhatsApp</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+  <!-- Flatpickr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+
+  <style>
+    body {
+      background-image: url('/static/doodle.png') !important;
+      background-repeat: repeat !important;
+      background-size: 300px !important;
+      font-family: 'Poppins', sans-serif;
+    }
+    .log-box {
+      height: 12rem;
+      overflow-y: auto;
+    }
+    .btn {
+      transition: all 0.3s ease-in-out;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      filter: brightness(1.1);
+    }
+  </style>
+</head>
+<body class="text-gray-800">
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <!-- Judul -->
+    <h1 class="text-3xl sm:text-4xl font-bold text-center text-[#25D366] mb-8 flex items-center justify-center gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-[#25D366]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.935 9.935 0 01-4-.8l-4 1 1-4A8.96 8.96 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+      </svg>
+      DTW Scheduler WhatsApp
+    </h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Unggah File -->
+      <div class="bg-white rounded-xl shadow-lg p-6 min-h-[200px]">
+        <h2 class="font-semibold text-lg mb-3">Unggah File Excel</h2>
+        <p class="text-sm text-gray-600 mb-4">File harus memiliki kolom 'Nomor WhatsApp'.</p>
+        <form id="uploadForm" enctype="multipart/form-data">
+          <input type="file" id="excelFile" name="file" accept=".xlsx" class="block w-full text-sm border border-gray-300 rounded-lg p-2.5 mb-4 focus:ring-2 focus:ring-[#25D366]" required>
+          <button type="submit" class="btn w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full py-2.5 font-medium shadow-md">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4-4m0 0l-4 4m4-4v12"/>
+            </svg>
+            Unggah
+          </button>
+        </form>
+        <div id="filePreview" class="mt-4 text-sm text-gray-700"></div>
+      </div>
+
+      <!-- Jadwal -->
+      <div class="bg-white rounded-xl shadow-lg p-6 min-h-[200px]">
+        <h2 class="font-semibold text-lg mb-4">Jadwal Pengiriman</h2>
+        <form id="scheduleForm" class="space-y-4">
+          <label class="block">
+            <span class="text-sm text-gray-700">Jam:</span>
+            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#25D366]">
+              <span class="px-3 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z"/>
+                </svg>
+              </span>
+              <input id="jam" name="jam" type="text" placeholder="Pilih Jam" readonly class="flatpickr-input flex-1 p-2 outline-none" required>
+            </div>
+          </label>
+          <label class="block">
+            <span class="text-sm text-gray-700">Tanggal:</span>
+            <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-[#25D366]">
+              <span class="px-3 text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 8h12a2 2 0 002-2V7H5v10a2 2 0 002 2z"/>
+                </svg>
+              </span>
+              <input id="tanggal" name="tanggal" type="text" placeholder="Pilih Tanggal" readonly class="flatpickr-input flex-1 p-2 outline-none" required>
+              <input type="hidden" id="days" name="days[]">
+            </div>
+          </label>
+        </form>
+      </div>
+
+      <!-- Pesan -->
+      <div class="space-y-6">
+        <div class="bg-white rounded-xl shadow-lg p-6 min-h-[200px]">
+          <h2 class="font-semibold text-lg mb-4">Kirim Pesan</h2>
+          <form id="sendForm" class="space-y-4">
+            <textarea id="pesan" name="pesan" rows="3" placeholder="Tulis pesan di sini..." class="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#25D366]" maxlength="500" required></textarea>
+            <div class="text-xs text-right text-gray-500"><span id="charCount">0</span>/500</div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button type="button" onclick="scheduleMessages()" class="btn flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full py-2.5 font-medium shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10m-11 8h12a2 2 0 002-2V7H5v10a2 2 0 002 2z"/>
+                </svg>
+                Jadwalkan
+              </button>
+              <button type="submit" class="btn flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full py-2.5 font-medium shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10l9-6 9 6-9 6-9-6z"/>
+                </svg>
+                Kirim Sekarang
+              </button>
+            </div>
+          </form>
+          <button onclick="cancelMessages()" class="btn flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full py-2.5 font-medium mt-3 w-full shadow-md">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m-6 2a9 9 0 1112 0 9 9 0 01-12 0z"/>
+            </svg>
+            Batalkan
+          </button>
+        </div>
+
+        <!-- Info Jadwal -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+          <h2 class="font-semibold text-lg mb-4">Info Jadwal</h2>
+          <ul id="scheduleList" class="space-y-3 text-sm"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progres & Log -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <h2 class="font-semibold text-lg">Progres & Log Aktivitas</h2>
+        <div class="flex flex-col sm:flex-row gap-3">
+          <select id="logDateFilter" class="border border-gray-300 rounded-lg text-sm p-2 focus:ring-2 focus:ring-[#25D366]">
+            <option value="">Pilih Hari</option>
+          </select>
+          <select id="sessionFilter" class="border border-gray-300 rounded-lg text-sm p-2 focus:ring-2 focus:ring-[#25D366]">
+            <option value="">Pilih Sesi</option>
+          </select>
+          <select id="logFilter" class="border border-gray-300 rounded-lg text-sm p-2 focus:ring-2 focus:ring-[#25D366]">
+            <option value="all">Semua</option>
+            <option value="error">Error</option>
+          </select>
+          <button onclick="downloadLog()" class="btn flex items-center justify-center gap-2 border border-gray-300 rounded-full px-4 py-2 text-sm hover:bg-gray-100 shadow-md">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Unduh
+          </button>
+        </div>
+      </div>
+      <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden mb-4">
+        <div id="progressBar" class="h-6 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-center text-white text-sm leading-6 transition-all duration-300" style="width:0%">0%</div>
+      </div>
+      <div id="logBox" class="log-box border border-gray-200 rounded-lg p-3 text-sm bg-gray-50"></div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/70 z-50 flex items-center justify-center">
+      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-[#25D366] border-solid"></div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // Initialize Flatpickr
+    const now = new Date();
+    const defaultHour = now.getHours().toString().padStart(2, '0');
+    const defaultMinute = now.getMinutes().toString().padStart(2, '0');
+    const jamPicker = flatpickr("#jam", { 
+      enableTime: true, 
+      noCalendar: true, 
+      dateFormat: "H:i", 
+      time_24hr: true, 
+      disableMobile: true,
+      defaultDate: `${defaultHour}:${defaultMinute}`
+    });
+    const tanggalPicker = flatpickr("#tanggal", {
+      mode: "multiple",
+      dateFormat: "j",
+      minDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      maxDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+      disableMobile: true,
+      onChange: (selectedDates) => {
+        const days = selectedDates.map(d => d.getDate());
+        console.log('Selected days:', days); // Debugging
+        document.getElementById('days').value = days.join(',');
+      }
+    });
+
+    // Character count
+    document.getElementById('pesan').addEventListener('input', function() {
+      document.getElementById('charCount').textContent = this.value.length;
+    });
+
+    // Toast notification
+    function showToast(msg, icon = "success") {
+      Swal.fire({ toast: true, position: 'top-end', icon, title: msg, showConfirmButton: false, timer: 3000 });
+    }
+
+    // Toggle loading overlay
+    function toggleLoading(show) {
+      document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+    }
+
+    // Error handling for fetch requests
+    async function fetchWithErrorHandling(url, options) {
+      try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP error: ${response.status} - ${errorText}`);
+        }
+        return await response.json();
+      } catch (error) {
+        console.error('Fetch error:', error);
+        showToast(`Terjadi kesalahan: ${error.message}`, 'error');
+        return { status: 'error', message: 'Gagal menghubungi server' };
+      }
+    }
+
+    // Validate time format
+    function validateTime(time) {
+      return time && time.match(/^\d{2}:\d{2}$/);
+    }
+
+    // Upload file
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('excelFile');
+      if (!fileInput.files.length) return showToast('Pilih file terlebih dahulu', 'warning');
+      toggleLoading(true);
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      try {
+        const result = await fetch('/upload', { method: 'POST', body: formData });
+        const data = await result.json();
+        showToast(data.message, data.status === 'success' ? 'success' : 'error');
+        if (data.status === 'success') {
+          document.getElementById('filePreview').innerHTML = `<b>${fileInput.files[0].name}</b> - ${data.total_contacts || 'Kontak terdeteksi'}`;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        showToast(`Gagal mengunggah file: ${error.message}`, 'error');
+      } finally {
+        toggleLoading(false);
+      }
+    });
+
+    // Schedule messages
+    async function scheduleMessages() {
+      const jam = jamPicker.input.value;
+      const days = tanggalPicker.selectedDates.map(d => d.getDate());
+      const pesan = document.getElementById('pesan').value;
+      console.log('Preparing to schedule:', { jam, days, pesan }); // Debugging
+      if (!validateTime(jam)) return showToast('Format jam tidak valid (harus HH:mm, misal 14:00)', 'warning');
+      if (!days.length) return showToast('Pilih setidaknya satu tanggal', 'warning');
+      if (!pesan) return showToast('Pesan tidak boleh kosong', 'warning');
+      toggleLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append('jam', jam);
+        formData.append('pesan', pesan);
+        days.forEach(day => formData.append('days[]', day));
+        console.log('Sending schedule data:', { jam, days, pesan }); // Debugging
+        const result = await fetchWithErrorHandling('/schedule', {
+          method: 'POST',
+          body: formData
+        });
+        showToast(result.message, result.status === 'success' ? 'success' : 'error');
+        if (result.status === 'success') {
+          loadSchedules();
+          loadSessionFilter(); // PERBAIKAN: Reload filter sesi setelah jadwal baru
+        }
+      } catch (error) {
+        console.error('Schedule error:', error);
+        showToast(`Gagal menjadwalkan: ${error.message}`, 'error');
+      } finally {
+        toggleLoading(false);
+      }
+    }
+
+    // Send messages
+    document.getElementById('sendForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pesan = document.getElementById('pesan').value;
+      if (!pesan) return showToast('Pesan tidak boleh kosong', 'warning');
+      toggleLoading(true);
+      try {
+        const result = await fetchWithErrorHandling('/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `pesan=${encodeURIComponent(pesan)}`
+        });
+        showToast(result.message, result.status === 'success' ? 'success' : 'error');
+        if (result.status === 'success') loadSessionFilter(); // PERBAIKAN: Reload filter sesi setelah kirim manual
+      } catch (error) {
+        console.error('Send error:', error);
+        showToast(`Gagal mengirim pesan: ${error.message}`, 'error');
+      } finally {
+        toggleLoading(false);
+      }
+    });
+
+    // Cancel messages
+    async function cancelMessages() {
+      toggleLoading(true);
+      try {
+        const result = await fetchWithErrorHandling('/cancel', { method: 'POST' });
+        showToast(result.message, result.status === 'success' ? 'success' : 'error');
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressBar').textContent = '0%';
+      } catch (error) {
+        console.error('Cancel error:', error);
+        showToast(`Gagal membatalkan: ${error.message}`, 'error');
+      } finally {
+        toggleLoading(false);
+      }
+    }
+
+    // Edit schedule
+    async function editSchedule(id) {
+      const schedule = await fetchWithErrorHandling('/schedules').then(data => data[id]);
+      if (!schedule) return showToast('Jadwal tidak ditemukan', 'error');
+      const { value: formValues } = await Swal.fire({
+        title: `Edit Jadwal ${id}`,
+        html: `
+          <input id="swal-jam" type="text" class="flatpickr-input p-2 border rounded w-full" placeholder="Pilih Jam" readonly>
+          <input id="swal-tanggal" type="text" class="flatpickr-input p-2 border rounded w-full mt-2" placeholder="Pilih Tanggal" readonly>
+          <textarea id="swal-pesan" class="p-2 border rounded w-full mt-2" placeholder="Tulis pesan..." maxlength="500">${schedule.pesan.replace('...', '')}</textarea>
+        `,
+        focusConfirm: false,
+        showCancelButton: true,
+        confirmButtonText: 'Simpan',
+        confirmButtonColor: '#25D366',
+        cancelButtonColor: '#d33',
+        didOpen: () => {
+          flatpickr('#swal-jam', { 
+            enableTime: true, 
+            noCalendar: true, 
+            dateFormat: 'H:i', 
+            time_24hr: true, 
+            defaultDate: schedule.jam 
+          });
+          flatpickr('#swal-tanggal', { 
+            mode: 'multiple', 
+            dateFormat: 'j', 
+            minDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1), 
+            maxDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0), 
+            defaultDate: schedule.days.map(d => new Date(new Date().getFullYear(), new Date().getMonth(), d)) 
+          });
+        },
+        preConfirm: () => {
+          const jam = document.getElementById('swal-jam').value;
+          if (!validateTime(jam)) {
+            Swal.showValidationMessage('Format jam tidak valid (harus HH:mm, misal 14:00)');
+            return false;
+          }
+          return {
+            jam,
+            days: flatpickr('#swal-tanggal').selectedDates.map(d => d.getDate()),
+            pesan: document.getElementById('swal-pesan').value
+          };
+        }
+      });
+      if (formValues) {
+        toggleLoading(true);
+        try {
+          const formData = new FormData();
+          formData.append('id', id);
+          formData.append('jam', formValues.jam);
+          formData.append('pesan', formValues.pesan);
+          formValues.days.forEach(day => formData.append('days[]', day));
+          console.log('Sending edit schedule data:', { id, ...formValues }); // Debugging
+          const result = await fetchWithErrorHandling('/edit_schedule', {
+            method: 'POST',
+            body: formData
+          });
+          showToast(result.message, result.status === 'success' ? 'success' : 'error');
+          if (result.status === 'success') {
+            loadSchedules();
+            loadSessionFilter(); // PERBAIKAN: Reload filter sesi setelah edit
+          }
+        } catch (error) {
+          console.error('Edit schedule error:', error);
+          showToast(`Gagal memperbarui jadwal: ${error.message}`, 'error');
+        } finally {
+          toggleLoading(false);
+        }
+      }
+    }
+
+    // Delete schedule
+    async function deleteSchedule(id) {
+      const result = await Swal.fire({
+        title: 'Hapus Jadwal?',
+        text: 'Jadwal ini akan dihapus permanen',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, hapus!'
+      });
+      if (result.isConfirmed) {
+        toggleLoading(true);
+        try {
+          const result = await fetchWithErrorHandling('/delete_schedule', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${encodeURIComponent(id)}`
+          });
+          showToast(result.message, result.status === 'success' ? 'success' : 'error');
+          if (result.status === 'success') {
+            loadSchedules();
+            loadSessionFilter(); // PERBAIKAN: Reload filter sesi setelah hapus
+          }
+        } catch (error) {
+          console.error('Delete schedule error:', error);
+          showToast(`Gagal menghapus jadwal: ${error.message}`, 'error');
+        } finally {
+          toggleLoading(false);
+        }
+      }
+    }
+
+    // Load schedules
+    async function loadSchedules() {
+      try {
+        const schedules = await fetchWithErrorHandling('/schedules');
+        const list = document.getElementById('scheduleList');
+        list.innerHTML = '';
+        for (const [id, item] of Object.entries(schedules)) {
+          const li = document.createElement('li');
+          li.className = 'flex justify-between items-center bg-gray-50 p-3 rounded-lg';
+          li.innerHTML = `
+            <div>
+              <div class="font-medium text-gray-700">${item.days.join(', ')} - ${item.jam}</div>
+              <div class="text-gray-500 text-xs">${item.pesan}</div>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="editSchedule('${id}')" class="btn p-2 rounded-full hover:bg-yellow-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6 3.536 3.536a2.5 2.5 0 010 3.536l-6.5 6.5a2.5 2.5 0 01-3.536 0L3 16.5V13h3.5l6.5-6.5z"/>
+                </svg>
+              </button>
+              <button onclick="deleteSchedule('${id}')" class="btn p-2 rounded-full hover:bg-red-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7H5m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3"/>
+                </svg>
+              </button>
+            </div>
+          `;
+          list.appendChild(li);
+        }
+      } catch (error) {
+        console.error('Load schedules error:', error);
+        document.getElementById('scheduleList').innerHTML = '<li class="text-gray-500">Gagal memuat jadwal</li>';
+      }
+    }
+
+    // Load session filter // PERBAIKAN: Muat sesi berdasarkan ID pengiriman (tanggal_jam)
+    async function loadSessionFilter() {
+      const date = document.getElementById('logDateFilter').value || new Date().toISOString().split('T')[0];
+      try {
+        const sessions = await fetchWithErrorHandling(`/sessions?date=${date}`);
+        const sessionFilter = document.getElementById('sessionFilter');
+        sessionFilter.innerHTML = '<option value="">Pilih Sesi</option>';
+        sessions.forEach(session => {
+          const option = document.createElement('option');
+          option.value = session;
+          option.textContent = session; // Tampilkan ID seperti YYYY-MM-DD_HH:MM
+          sessionFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Load session filter error:', error);
+        showToast('Gagal memuat sesi', 'error');
+      }
+    }
+
+    // Load date filter options
+    async function loadDateFilter() {
+      try {
+        const dates = await fetchWithErrorHandling('/logs_dates');
+        const dateFilter = document.getElementById('logDateFilter');
+        dateFilter.innerHTML = '<option value="">Pilih Hari</option>';
+        dates.forEach(date => {
+          const option = document.createElement('option');
+          option.value = date;
+          option.textContent = date;
+          dateFilter.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Load date filter error:', error);
+        showToast('Gagal memuat daftar tanggal', 'error');
+      }
+    }
+
+    // Load logs // PERBAIKAN: Filter berdasarkan session ID (schedule_id)
+    async function loadLogs() {
+      const date = document.getElementById('logDateFilter').value || new Date().toISOString().split('T')[0];
+      const session = document.getElementById('sessionFilter').value;
+      try {
+        const data = await fetchWithErrorHandling(`/logs?date=${date}${session ? '&schedule_id=' + session : ''}`);
+        let logs = data.logs;
+        const logFilter = document.getElementById('logFilter').value;
+        if (logFilter === 'error') {
+          logs = logs.filter(line => line.includes('[ERROR]') || line.includes('[GAGAL]'));
+        }
+        const logBox = document.getElementById('logBox');
+        logBox.innerHTML = logs.map(line => `<p>${line}</p>`).join('');
+        logBox.scrollTop = logBox.scrollHeight;
+        return logs;
+      } catch (error) {
+        console.error('Load logs error:', error);
+        document.getElementById('logBox').innerHTML = 'Gagal memuat log';
+        return [];
+      }
+    }
+
+    // Download log // PERBAIKAN: Sertakan filter sesi jika dipilih
+    async function downloadLog() {
+      try {
+        const date = document.getElementById('logDateFilter').value || new Date().toISOString().split('T')[0];
+        const session = document.getElementById('sessionFilter').value;
+        const url = `/download_logs?date=${date}${session ? '&schedule_id=' + session : ''}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+        const blob = await response.blob();
+        const objUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objUrl;
+        a.download = `log_${date}${session ? '_' + session : ''}.txt`;
+        a.click();
+        URL.revokeObjectURL(objUrl);
+        showToast('Log berhasil diunduh', 'success');
+      } catch (error) {
+        console.error('Download log error:', error);
+        showToast('Gagal mengunduh log', 'error');
+      }
+    }
+
+    // Poll progress
+    let pollingInterval;
+    function pollProgress() {
+      clearInterval(pollingInterval);
+      pollingInterval = setInterval(async () => {
+        try {
+          const progressData = await fetchWithErrorHandling('/progress');
+          const progress = progressData.progress;
+          document.getElementById('progressBar').style.width = `${progress}%`;
+          document.getElementById('progressBar').textContent = `${Math.round(progress)}%`;
+          if (progress >= 100) {
+            clearInterval(pollingInterval);
+            setTimeout(() => {
+              document.getElementById('progressBar').style.width = '0%';
+              document.getElementById('progressBar').textContent = '0%';
+            }, 2000);
+          }
+          await loadLogs();
+        } catch (error) {
+          console.error('Poll progress error:', error);
+          clearInterval(pollingInterval);
+          document.getElementById('progressBar').style.width = '0%';
+          document.getElementById('progressBar').textContent = '0%';
+          document.getElementById('logBox').innerHTML = 'Gagal memuat log';
+        }
+      }, 2000);
+    }
+
+    // Event listeners
+    document.getElementById('logDateFilter').addEventListener('change', () => {
+      loadSessionFilter();
+      loadLogs();
+    });
+    document.getElementById('logFilter').addEventListener('change', loadLogs);
+    document.getElementById('sessionFilter').addEventListener('change', loadLogs);
+
+    // Initialize
+    loadSchedules();
+    loadDateFilter();
+    loadSessionFilter();
+    pollProgress();
+  </script>
+</body>
+</html>
