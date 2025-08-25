@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="id" class="bg-gray-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - WhatsApp Scheduler</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/static/favicon.png?v=1">
+
+  <style>
+    body {
+      background-image: url('/static/doodle.png') !important;
+      background-repeat: repeat !important;
+      background-size: 300px !important;
+      font-family: 'Poppins', sans-serif;
+    }
+    .login-card {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .btn {
+      transition: all 0.3s ease-in-out;
+    }
+    .btn:hover {
+      transform: scale(1.05);
+      filter: brightness(1.1);
+    }
+  </style>
+</head>
+<body class="text-gray-800 min-h-screen flex items-center justify-center">
+  <div class="login-card bg-white rounded-xl shadow-lg p-6">
+    <h2 class="text-2xl font-bold text-center text-[#25D366] mb-6">Login</h2>
+    <form id="loginForm" class="space-y-4">
+      <div>
+        <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+        <input type="text" id="username" name="username" class="mt-1 block w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#25D366]" required>
+      </div>
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+        <input type="password" id="password" name="password" class="mt-1 block w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-[#25D366]" required>
+      </div>
+      <button type="submit" class="btn w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-full py-2.5 font-medium shadow-md">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/>
+        </svg>
+        Masuk
+      </button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    if (!username || !password) {
+      Swal.fire({ icon: 'warning', title: 'Peringatan', text: 'Username dan password harus diisi.' });
+      return;
+    }
+
+    try {
+      const response = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+      });
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        Swal.fire({ icon: 'success', title: 'Sukses', text: data.message }).then(() => {
+          window.location.href = '/'; // Pastikan redirect ke root (/)
+        });
+      } else {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: data.message });
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      Swal.fire({ icon: 'error', title: 'Error', text: 'Gagal menghubungi server.' });
+    }
+  });
+</script>
+</body>
+</html>
